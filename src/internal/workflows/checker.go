@@ -4,21 +4,22 @@ import (
 	"time"
 
 	"github.com/copito/quality/src/internal/activities"
+	"github.com/copito/quality/src/internal/entities"
 
 	"go.temporal.io/sdk/workflow"
 )
 
 // WorkflowInput defines the parameters for this workflow
-type WorkflowInput struct {
-	Schedule       string // e.g., "0 20 * * *"
-	Metric         string // e.g., "row_count"
-	Transformation string // e.g., "DIFF"
-	Condition      string // e.g., ">= 25"
-	AlertEmail     string
-}
+// type WorkflowInput struct {
+// 	Schedule       string // e.g., "0 20 * * *"
+// 	Metric         string // e.g., "row_count"
+// 	Transformation string // e.g., "DIFF"
+// 	Condition      string // e.g., ">= 25"
+// 	AlertEmail     string
+// }
 
 // MetricCheckWorkflow is the main workflow function
-func MetricCheckWorkflow(ctx workflow.Context, input WorkflowInput) error {
+func MetricCheckWorkflow(ctx workflow.Context, input entities.WorkflowInput) error {
 	logger := workflow.GetLogger(ctx)
 	logger.Info("MyWorkflow")
 

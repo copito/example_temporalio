@@ -52,6 +52,7 @@ func main() {
 	w.RegisterActivity(activities.FetchMetricData)
 	w.RegisterActivity(activities.ApplyTransformation)
 	w.RegisterActivity(activities.EvaluateCondition)
+	w.RegisterActivity(activities.SendKafkaAlert)
 	w.RegisterActivity(activities.SendAlert)
 
 	// Start worker
@@ -61,11 +62,12 @@ func main() {
 	}
 
 	// Wait for termination signal
-	go func(logger *slog.Logger) {
+	go func(logger *slog.Logger, w worker.Worker) {
 		sig := <-sigs
 		logger.Info("Closing down based on signal...", slog.Any("signal", sig))
+		w.Stop()
 		doneChan <- true
-	}(logger)
+	}(logger, w)
 
 	<-doneChan
 }
