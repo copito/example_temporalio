@@ -34,7 +34,7 @@ services:
     volumes:
       - ./dynamicconfig:/etc/temporal/config/dynamicconfig
 
-  # ?????
+  # CLI tool for making changes
   temporal-admin-tools:
     container_name: temporal-admin-tools
     depends_on:
