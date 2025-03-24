@@ -3,10 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"log/slog"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/copito/quality/src/internal/entities"
@@ -33,7 +31,7 @@ func main() {
 		Trigger: entities.Trigger{
 			Type: entities.ScheduleTrigger,
 			ScheduleTrigger: &entities.ScheduleTriggerType{
-				Schedule: "*/5 * * * *",
+				Schedule: "* * * * *",
 				Timezone: "UTC",
 			},
 		},
@@ -54,7 +52,8 @@ func main() {
 		Logger: temp_logger.NewStructuredLogger(logger),
 	})
 	if err != nil {
-		log.Fatalln("Unable to create Temporal client", err)
+		logger.Error("Unable to create Temporal client", slog.Any("err", err))
+		return
 	}
 	defer c.Close()
 
@@ -63,18 +62,31 @@ func main() {
 		// params := []entities.WorkflowInput{input}
 		// scheduleCronExpression := fmt.Sprintf("CRON_TZ=%v %v", input.Trigger.ScheduleTrigger.Timezone, input.Trigger.ScheduleTrigger.Schedule)
 
+		// payloadConverter := converter.GetDefaultDataConverter()
+		// payload, err := payloadConverter.ToPayloads(input)
+		if err != nil {
+			logger.Error("Unable to convert input into payload", slog.Any("err", err))
+			return
+		}
+
+		cronExpression := []string{input.Trigger.ScheduleTrigger.Schedule}
+		logger.Info("Preparing to create cron", slog.Any("cron", cronExpression))
+
 		sc := c.ScheduleClient()
 
 		options := client.ScheduleOptions{
 			ID: fmt.Sprintf("metric-check-workflow-%v-scheduled", "jello"),
 			Spec: client.ScheduleSpec{
-				CronExpressions: strings.Split(input.Trigger.ScheduleTrigger.Schedule, " "),
+				CronExpressions: cronExpression,
+				TimeZoneName:    input.Trigger.ScheduleTrigger.Timezone,
 			},
 			Action: &client.ScheduleWorkflowAction{
 				ID:        fmt.Sprintf("metric-check-workflow-%v", "jello-scheduled"),
 				Workflow:  "MetricCheckWorkflow",
 				TaskQueue: "metrics-task-queue",
-				Args:      []interface{},
+				Args: []interface{}{
+					input,
+				},
 			},
 			Paused:         false,
 			PauseOnFailure: false,
